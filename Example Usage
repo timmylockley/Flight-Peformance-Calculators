@@ -1,0 +1,10 @@
+# Example usage
+if __name__ == "__main__":
+    density = float(input("Enter air density (kg/m³, e.g., 1.225 at sea level): "))
+    velocity = float(input("Enter airspeed (m/s): "))
+    wing_area = float(input("Enter wing area (m²): "))
+    lift_coefficient = float(input("Enter coefficient of lift (C_L): "))
+    
+    lift_force = calculate_lift(density, velocity, wing_area, lift_coefficient)
+    print(f"Lift Force: {lift_force:.2f} N")
+    print(f"Lift Force in kg: {lift_force / 9.81:.2f} kg")
