@@ -1,0 +1,22 @@
+def calculate_power(weight, velocity, efficiency):
+    """
+    Calculates the required engine power in horsepower.
+    :param weight: Aircraft weight (pounds)
+    :param velocity: Airspeed (feet per second)
+    :param efficiency: Propulsion efficiency (0-1)
+    :return: Required horsepower (HP)
+    """
+    if efficiency <= 0 or efficiency > 1:
+        raise ValueError("Efficiency must be between 0 and 1.")
+    
+    power_hp = (weight * velocity) / (efficiency * 550)
+    return power_hp
+
+# Example usage
+if __name__ == "__main__":
+    weight = float(input("Enter aircraft weight (lbs): "))
+    velocity = float(input("Enter airspeed (ft/s): "))
+    efficiency = float(input("Enter propulsion efficiency (e.g., 0.75 for 75% efficient engine): "))
+    
+    power_required = calculate_power(weight, velocity, efficiency)
+    print(f"Required Engine Power: {power_required:.2f} HP")
