@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aircraft Design Pro - Advanced</title>
+
+  <!-- Chart.js CDN for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Reset and base */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f8fc;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      color: #004080;
+      margin-bottom: 1rem;
+      user-select: none;
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgb(0 64 128 / 0.15);
+      padding: 2rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    
+    /* Progress Bar */
+    .progress-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      counter-reset: step;
+    }
+    .progress-step {
+      position: relative;
+      text-align: center;
+      flex: 1;
+      color: #a5b1c2;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+    .progress-step::before {
+      counter-increment: step;
+      content: counter(step);
+      width: 32px; height: 32px;
+      line-height: 32px;
+      border: 2px solid #a5b1c2;
+      border-radius: 50%;
+      display: block;
+      margin: 0 auto 8px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    .progress-step.active,
+    .progress-step.completed {
+      color: #004080;
+    }
+    .progress-step.active::before,
+    .progress-step.completed::before {
+      background: #004080;
+      color: white;
+      border-color: #004080;
+    }
+    .progress-step.completed::after {
+      content: "";
+      position: absolute;
+      top: 16px;
+      left: calc(50% + 18px);
+      width: 100%;
+      height: 4px;
+      background: #004080;
+      z-index: -1;
+      transition: width 0.3s ease;
+    }
+    .progress-step:last-child::after {
+      display: none;
+    }
+
+    /* Form styles */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: #003366;
+    }
+    input[type=number], input[type=text], select {
+      padding: 0.5rem 0.8rem;
+      font-size: 1rem;
+      border: 2px solid #d1d9e6;
+      border-radius: 6px;
+      transition: border-color 0.2s ease;
+      width: 100%;
+    }
+    input[type=number]:focus, input[type=text]:focus, select:focus {
+      outline: none;
+      border-color: #004080;
+      background: #e8f0fe;
+    }
+    input[readonly] {
+      background: #f0f3fa;
+      cursor: not-allowed;
+    }
+    .flex-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .flex-row > div {
+      flex: 1 1 140px;
+      min-width: 140px;
+    }
+
+    /* Summary */
+    .summary-block {
+      background: #e8f0fe;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      font-family: monospace;
+      white-space: pre-wrap;
+      color: #004080;
+      font-weight: 600;
+      font-size: 1.1rem;
+      user-select: text;
+      min-height: 120px;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+    }
+    button {
+      background: #004080;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      padding: 0.8rem 1.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:disabled {
+      background: #9db4cc;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background: #f29e38;
+      color: #111;
+    }
+
+    /* Saved designs list */
+    .saved-designs {
+      margin-top: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .saved-designs h3 {
+      text-align: center;
+      color: #004080;
+      margin-bottom: 1rem;
+    }
+    .saved-designs ul {
+      list-style: none;
+      padding: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #d1d9e6;
+      border-radius: 6px;
+      background: white;
+    }
+    .saved-designs li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #d1d9e6;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+    }
+    .saved-designs li:hover {
+      background: #e8f0fe;
+    }
+    .saved-designs li button {
+      background: #e74c3c;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      padding: 0.25rem 0.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .saved-designs li button:hover {
+      background: #c0392b;
+    }
+    .saved-designs-empty {
+      text-align: center;
+      color: #999;
+      padding: 1rem;
+      font-style: italic;
+    }
+
+    /* Airfoil select/upload */
+    #airfoilFile {
+      padding: 0.3rem;
+      border: 2px solid #d1d9e6;
+      border-radius: 6px;
+      width: 100%;
+    }
+    #airfoilSelect {
+      width: 100%;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      border: 2px solid #d1d9e6;
+      font-size: 1rem;
+      background: white;
+      transition: border-color 0.2s ease;
+    }
+    #airfoilSelect:focus {
+      border-color: #004080;
+      background: #e8f0fe;
+      outline: none;
+    }
+
+    /* Graph container */
+    #liftDragChartContainer {
+      max-width: 600px;
+      margin: 1rem auto;
+      background: #f0f4fa;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: inset 0 0 5px #ccc;
+    }
+
+    /* Recommendations */
+    #recommendations {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 1rem;
+      color: #856404;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      user-select: text;
+      min-height: 80px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>Aircraft Design Pro - Advanced</h1>
+  <div class="container">
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-step active" data-step="0">General</div>
+      <div class="progress-step" data-step="1">Aerodynamics</div>
+      <div class="progress-step" data-step="2">Structures</div>
+      <div class="progress-step" data-step="3">Propulsion</div>
+      <div class="progress-step" data-step="4">Weight & Balance</div>
+      <div class="progress-step" data-step="5">Airfoil</div>
+      <div class="progress-step" data-step="6">Summary</div>
+    </div>
+
+    <form id="designForm" novalidate autocomplete="off">
+
+      <!-- Step 0: General Info -->
+      <fieldset data-step="0" class="step-fieldset">
+        <legend><strong>General Aircraft Information</strong></legend>
+        <label for="designName">Design Name *</label>
+        <input type="text" id="designName" placeholder="Enter design name" required />
+        <label for="crew">Crew Number</label>
+        <input type="number" id="crew" min="0" step="1" value="1" />
+        <label for="passengers">Max Passengers</label>
+        <input type="number" id="passengers" min="0" step="1" value="4" />
+        <label for="maxTakeoffWeight">Max Takeoff Weight (kg)</label>
+        <input type="number" id="maxTakeoffWeight" min="100" step="100" value="5000" />
+      </fieldset>
+
+      <!-- Step 1: Aerodynamics -->
+      <fieldset data-step="1" class="step-fieldset" style="display:none;">
+        <legend><strong>Aerodynamics</strong></legend>
+        <div class="flex-row">
+          <div>
+            <label for="wingSpan">Wing Span (m)</label>
+            <input type="number" id="wingSpan" min="1" step="0.1" value="10" />
+          </div>
+          <div>
+            <label for="wingArea">Wing Area (m²)</label>
+            <input type="number" id="wingArea" min="1" step="0.1" value="20" />
+          </div>
+          <div>
+            <label for="aspectRatio">Aspect Ratio</label>
+            <input type="number" id="aspectRatio" min="1" step="0.01" value="5" readonly />
+          </div>
+        </div>
+        <div class="flex-row">
+          <div>
+            <label for="clMax">Max Lift Coefficient (Cl_max)</label>
+            <input type="number" id="clMax" min="0" step="0.01" value="1.5" />
+          </div>
+          <div>
+            <label for="cd0">Zero-lift Drag Coefficient (Cd0)</label>
+            <input type="number" id="cd0" min="0" step="0.001" value="0.02" />
+          </div>
+          <div>
+            <label for="oswaldEfficiency">Oswald Efficiency Factor (e)</label>
+            <input type="number" id="oswaldEfficiency" min="0.1" max="1" step="0.01" value="0.8" />
+          </div>
+        </div>
+        <label for="cruiseSpeed">Cruise Speed (m/s)</label>
+        <input type="number" id="cruiseSpeed" min="10" step="1" value="70" />
+      </fieldset>
+
+      <!-- Step 2: Structures -->
+      <fieldset data-step="2" class="step-fieldset" style="display:none;">
+        <legend><strong>Structural Analysis</strong></legend>
+        <label for="materialYield">Material Yield Strength (MPa)</label>
+        <input type="number" id="materialYield" min="1" step="1" value="300" />
+        <label for="materialDensity">Material Density (kg/m³)</label>
+        <input type="number" id="materialDensity" min="1" step="1" value="2700" />
+        <label for="safetyFactor">Safety Factor</label>
+        <input type="number" id="safetyFactor" min="1" max="10" step="0.1" value="1.5" />
+        <label for="maxLoadFactor">Max Load Factor (n_max)</label>
+        <input type="number" id="maxLoadFactor" min="1" max="10" step="0.1" value="3.8" />
+      </fieldset>
+
+      <!-- Step 3: Propulsion -->
+      <fieldset data-step="3" class="step-fieldset" style="display:none;">
+        <legend><strong>Propulsion</strong></legend>
+        <label for="requiredThrust">Required Thrust (N)</label>
+        <input type="number" id="requiredThrust" min="1000" step="10" value="15000" />
+        <label for="specificFuelConsumption">Specific Fuel Consumption (kg/(N·hr))</label>
+        <input type="number" id="specificFuelConsumption" min="0.00001" step="0.00001" value="0.0001" />
+        <label for="engineEfficiency">Engine Efficiency (0-1)</label>
+        <input type="number" id="engineEfficiency" min="0.1" max="1" step="0.01" value="0.4" />
+      </fieldset>
+
+      <!-- Step 4: Weight & Balance -->
+      <fieldset data-step="4" class="step-fieldset" style="display:none;">
+        <legend><strong>Weight and Balance</strong></legend>
+        <div class="flex-row">
+          <div>
+            <label for="emptyWeight">Empty Weight (kg)</label>
+            <input type="number" id="emptyWeight" min="0" step="10" value="3000" />
+          </div>
+          <div>
+            <label for="payloadWeight">Payload Weight (kg)</label>
+            <input type="number" id="payloadWeight" min="0" step="10" value="800" />
+          </div>
+          <div>
+            <label for="fuelWeight">Fuel Weight (kg)</label>
+            <input type="number" id="fuelWeight" min="0" step="10" value="700" />
+          </div>
+        </div>
+        <label for="cgEmpty">Empty CG (m)</label>
+        <input type="number" id="cgEmpty" min="0" step="0.01" value="2.5" />
+        <label for="cgPayload">Payload CG (m)</label>
+        <input type="number" id="cgPayload" min="0" step="0.01" value="3.5" />
+        <label for="cgFuel">Fuel CG (m)</label>
+        <input type="number" id="cgFuel" min="0" step="0.01" value="1.8" />
+      </fieldset>
+
+      <!-- Step 5: Airfoil -->
+      <fieldset data-step="5" class="step-fieldset" style="display:none;">
+        <legend><strong>Airfoil Selection & Import</strong></legend>
+        <label for="airfoilSelect">Choose Airfoil</label>
+        <select id="airfoilSelect" aria-label="Choose airfoil">
+          <option value="">-- Select a recommended airfoil --</option>
+          <option value="NACA2412">NACA 2412</option>
+          <option value="NACA0012">NACA 0012</option>
+          <option value="ClarkY">Clark Y</option>
+        </select>
+        <label for="airfoilFile">Or Import Airfoil Polar CSV (Cl,Cd)</label>
+        <input type="file" id="airfoilFile" accept=".csv,text/csv" aria-label="Upload airfoil polar CSV" />
+        <small>CSV format: Cl,Cd columns, no header needed.</small>
+      </fieldset>
+
+      <!-- Step 6: Summary -->
+      <fieldset data-step="6" class="step-fieldset" style="display:none;">
+        <legend><strong>Summary & Stats</strong></legend>
+        <div class="summary-block" id="summaryBlock">
+          Loading calculations...
+        </div>
+
+        <div id="liftDragChartContainer">
+          <canvas id="liftDragChart" aria-label="Lift vs Drag Curve Chart" role="img"></canvas>
+        </div>
+
+        <label for="saveDesignName">Save Design as:</label>
+        <input type="text" id="saveDesignName" placeholder="Enter name to save design" />
+        <button type="button" id="saveDesignBtn" disabled>Save Design</button>
+
+        <button type="button" id="applyRecommendationsBtn" style="margin-top:1rem; background:#1a7f1a; display:none;">Apply Recommended Changes</button>
+      </fieldset>
+
+    </form>
+
+    <section class="saved-designs" aria-label="Saved designs">
+      <h3>Saved Designs</h3>
+      <ul id="designList" tabindex="0">
+        <li class="saved-designs-empty">No saved designs yet.</li>
+      </ul>
+      <div style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+        <button type="button" id="exportDesignsBtn">Export All Designs (JSON)</button>
+        <input type="file" id="importDesignsFile" accept=".json" style="display:none;" />
+        <button type="button" id="importDesignsBtn">Import Designs (JSON)</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function(){
+      'use strict';
+
+      const steps = [...document.querySelectorAll('.step-fieldset')];
+      const progressSteps = [...document.querySelectorAll('.progress-step')];
+      const form = document.getElementById('designForm');
+      const summaryBlock = document.getElementById('summaryBlock');
+      const saveDesignName = document.getElementById('saveDesignName');
+      const saveDesignBtn = document.getElementById('saveDesignBtn');
+      const designList = document.getElementById('designList');
+      const airfoilSelect = document.getElementById('airfoilSelect');
+      const airfoilFile = document.getElementById('airfoilFile');
+      const applyRecommendationsBtn = document.getElementById('applyRecommendationsBtn');
+
+      let currentStep = 0;
+      let designData = {};
+      let liftDragChart = null;
+      let currentAirfoilPolar = null; // {cl:[], cd:[]}
+
+      // Predefined airfoil polars (Cl, Cd) - simplified example data:
+      const recommendedAirfoils = {
+        'NACA2412': {
+          cl: [-0.5, 0, 0.5, 1, 1.2, 1.4, 1.5, 1.6],
+          cd: [0.05, 0.02, 0.018, 0.022, 0.03, 0.045, 0.07, 0.1]
+        },
+        'NACA0012': {
+          cl: [-0.8, -0.3, 0, 0.3, 0.6, 0.9, 1.1, 1.3],
+          cd: [0.06, 0.04, 0.025, 0.02, 0.025, 0.04, 0.06, 0.08]
+        },
+        'ClarkY': {
+          cl: [-0.3, 0, 0.5, 1, 1.1, 1.25, 1.35, 1.4],
+          cd: [0.04, 0.018, 0.015, 0.02, 0.025, 0.035, 0.055, 0.07]
+        }
+      };
+
+      function showStep(index){
+        steps.forEach((step, i) => {
+          step.style.display = i === index ? 'block' : 'none';
+          progressSteps[i].classList.toggle('active', i === index);
+          progressSteps[i].classList.toggle('completed', i < index);
+        });
+        currentStep = index;
+        if(currentStep === steps.length - 1){
+          calculateSummary();
+          saveDesignBtn.disabled = !saveDesignName.value.trim();
+        }
+      }
+
+      // Navigation buttons logic is replaced by clicking progress steps for simplicity
+      progressSteps.forEach(ps => {
+        ps.addEventListener('click', () => {
+          if(ps.classList.contains('active') || ps.classList.contains('completed')){
+            showStep(Number(ps.dataset.step));
+          }
+        });
+      });
+
+      // Validate required inputs for current step
+      function validateStep(stepIndex){
+        const inputs = steps[stepIndex].querySelectorAll('input[required]');
+        for(const input of inputs){
+          if(!input.value.trim()){
+            alert(`Please fill required field: "${input.previousElementSibling.textContent}"`);
+            input.focus();
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function collectData(){
+        // General
+        designData.name = document.getElementById('designName').value.trim();
+        designData.crew = Number(document.getElementById('crew').value);
+        designData.passengers = Number(document.getElementById('passengers').value);
+        designData.maxTakeoffWeight = Number(document.getElementById('maxTakeoffWeight').value);
+
+        // Aero
+        designData.wingSpan = Number(document.getElementById('wingSpan').value);
+        designData.wingArea = Number(document.getElementById('wingArea').value);
+        designData.aspectRatio = designData.wingSpan && designData.wingArea ? (designData.wingSpan ** 2 / designData.wingArea) : 0;
+        document.getElementById('aspectRatio').value = designData.aspectRatio.toFixed(2);
+        designData.clMax = Number(document.getElementById('clMax').value);
+        designData.cd0 = Number(document.getElementById('cd0').value);
+        designData.oswaldEfficiency = Number(document.getElementById('oswaldEfficiency').value);
+        designData.cruiseSpeed = Number(document.getElementById('cruiseSpeed').value);
+
+        // Structures
+        designData.materialYield = Number(document.getElementById('materialYield').value);
+        designData.materialDensity = Number(document.getElementById('materialDensity').value);
+        designData.safetyFactor = Number(document.getElementById('safetyFactor').value);
+        designData.maxLoadFactor = Number(document.getElementById('maxLoadFactor').value);
+
+        // Propulsion
+        designData.requiredThrust = Number(document.getElementById('requiredThrust').value);
+        designData.specificFuelConsumption = Number(document.getElementById('specificFuelConsumption').value);
+        designData.engineEfficiency = Number(document.getElementById('engineEfficiency').value);
+
+        // Weight & Balance
+        designData.emptyWeight = Number(document.getElementById('emptyWeight').value);
+        designData.payloadWeight = Number(document.getElementById('payloadWeight').value);
+        designData.fuelWeight = Number(document.getElementById('fuelWeight').value);
+        designData.cgEmpty = Number(document.getElementById('cgEmpty').value);
+        designData.cgPayload = Number(document.getElementById('cgPayload').value);
+        designData.cgFuel = Number(document.getElementById('cgFuel').value);
+
+        // Airfoil
+        designData.airfoilName = airfoilSelect.value || '';
+        designData.airfoilPolar = currentAirfoilPolar || null;
+      }
+
+      // Update on input
+      form.addEventListener('input', e => {
+        collectData();
+        if(currentStep === 1){
+          document.getElementById('aspectRatio').value = designData.aspectRatio.toFixed(2);
+        }
+        if(currentStep === steps.length -1){
+          calculateSummary();
+        }
+        saveDesignBtn.disabled = !saveDesignName.value.trim();
+      });
+
+      // Airfoil selection
+      airfoilSelect.addEventListener('change', () => {
+        if(airfoilSelect.value){
+          currentAirfoilPolar = recommendedAirfoils[airfoilSelect.value];
+          airfoilFile.value = '';
+          if(currentStep === steps.length - 1) calculateSummary();
+        } else {
+          currentAirfoilPolar = null;
+        }
+      });
+
+      // Airfoil CSV file upload (simple parser)
+      airfoilFile.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const text = evt.target.result;
+          const lines = text.trim().split(/\r?\n/);
+          const cl = [];
+          const cd = [];
+          for(let line of lines){
+            const parts = line.split(',');
+            if(parts.length >= 2){
+              const clVal = parseFloat(parts[0].trim());
+              const cdVal = parseFloat(parts[1].trim());
+              if(!isNaN(clVal) && !isNaN(cdVal)){
+                cl.push(clVal);
+                cd.push(cdVal);
+              }
+            }
+          }
+          if(cl.length < 2){
+            alert('Invalid airfoil polar file. Needs at least two (Cl,Cd) pairs.');
+            return;
+          }
+          currentAirfoilPolar = {cl, cd};
+          airfoilSelect.value = '';
+          if(currentStep === steps.length - 1) calculateSummary();
+        };
+        reader.readAsText(file);
+      });
+
+      // Summary calculations + graph + recommendations
+      function calculateSummary(){
+        collectData();
+
+        const rho = 1.225; // sea level air density kg/m3
+        const V = designData.cruiseSpeed;
+        const S = designData.wingArea;
+        const Cl = designData.clMax;
+        const Cd0 = designData.cd0;
+        const e = designData.oswaldEfficiency;
+        const AR = designData.aspectRatio;
+
+        // Lift & Drag coefficients and values
+        const Cd = Cd0 + (Cl*Cl)/(Math.PI*e*AR);
+
+        const lift = 0.5 * rho * V * V * S * Cl;
+        const drag = 0.5 * rho * V * V * S * Cd;
+
+        // Structural stress (simplified)
+        const loadFactor = designData.maxLoadFactor;
+        const yieldStrength = designData.materialYield * 1e6; // Pa
+        const safetyFactor = designData.safetyFactor;
+
+        // Weight & Balance CG
+        const totalWeight = designData.emptyWeight + designData.payloadWeight + designData.fuelWeight;
+        const cgTotal = (designData.emptyWeight * designData.cgEmpty + designData.payloadWeight * designData.cgPayload + designData.fuelWeight * designData.cgFuel) / totalWeight;
+
+        // Propulsion
+        const thrust = designData.requiredThrust;
+        const sfc = designData.specificFuelConsumption;
+        const fuelConsumption = thrust * sfc;
+        const powerRequired = thrust * V / designData.engineEfficiency;
+
+        // Advanced: Stability margin (simple static margin)
+        // Assume mean aerodynamic chord MAC = WingArea / WingSpan (simplified)
+        const MAC = S / designData.wingSpan || 0.0001;
+        // Assume neutral point at 25% MAC forward of leading edge
+        const neutralPoint = 0.25 * MAC + 0; // 0 = leading edge reference
+        // CG position relative to leading edge
+        const cgPos = cgTotal;
+        // Static margin = (NP - CG)/MAC
+        const staticMargin = (neutralPoint - cgPos) / MAC;
+
+        // Fuel system sizing (endurance and range)
+        // Endurance (hr) = Fuel weight / fuel consumption rate (kg/hr)
+        const endurance = fuelConsumption > 0 ? designData.fuelWeight / fuelConsumption : 0;
+        // Range (m) = Endurance * cruise speed
+        const range = endurance * V;
+
+        // Use Airfoil polar if available for lift/drag curve plotting
+        let plotCl = [];
+        let plotCd = [];
+        if(currentAirfoilPolar){
+          plotCl = currentAirfoilPolar.cl;
+          plotCd = currentAirfoilPolar.cd;
+        } else {
+          // fallback simple curve for lift range 0 to clMax
+          plotCl = [];
+          plotCd = [];
+          for(let c = 0; c <= Cl; c += Cl/10){
+            plotCl.push(c);
+            plotCd.push(Cd0 + (c*c)/(Math.PI*e*AR));
+          }
+        }
+
+        // Plot graph
+        plotLiftDragCurve(plotCl, plotCd);
+
+        // Recommendations engine (very basic)
+        const recommendations = [];
+        if(staticMargin < 0.05) recommendations.push('- Increase static margin: move CG forward or redesign wing.');
+        if(staticMargin > 0.2) recommendations.push('- Static margin too high: may reduce maneuverability.');
+        if(Cl < 1.2) recommendations.push('- Increase max lift coefficient by using better airfoil or high-lift devices.');
+        if(designData.fuelWeight < designData.payloadWeight * 0.5) recommendations.push('- Consider increasing fuel capacity for longer range.');
+        if(designData.requiredThrust < totalWeight * 9.81 * 0.3) recommendations.push('- Increase engine thrust for better performance.');
+
+        // Display summary text
+        summaryBlock.textContent = `
+Design Name: ${designData.name || "(Unnamed)"}
+Max Takeoff Weight: ${designData.maxTakeoffWeight.toFixed(0)} kg
+Wing Span: ${designData.wingSpan.toFixed(2)} m
+Wing Area: ${designData.wingArea.toFixed(2)} m²
+Aspect Ratio: ${AR.toFixed(2)}
+Max Lift Coefficient (Cl_max): ${Cl.toFixed(2)}
+Zero-lift Drag Coefficient (Cd0): ${Cd0.toFixed(3)}
+Estimated Lift @ Cruise: ${lift.toFixed(0)} N
+Estimated Drag @ Cruise: ${drag.toFixed(0)} N
+
+Structural:
+Material Yield Strength: ${designData.materialYield} MPa
+Max Load Factor (n): ${loadFactor}
+Safety Factor: ${safetyFactor}
+
+Weight & Balance:
+Empty Weight: ${designData.emptyWeight.toFixed(0)} kg
+Payload Weight: ${designData.payloadWeight.toFixed(0)} kg
+Fuel Weight: ${designData.fuelWeight.toFixed(0)} kg
+Total Weight: ${totalWeight.toFixed(0)} kg
+Center of Gravity (CG): ${cgTotal.toFixed(2)} m from reference
+
+Propulsion:
+Required Thrust: ${thrust.toFixed(0)} N
+Specific Fuel Consumption: ${sfc.toFixed(6)} kg/(N·hr)
+Estimated Fuel Consumption: ${fuelConsumption.toFixed(2)} kg/hr
+Estimated Power Required: ${powerRequired.toFixed(0)} W
+
+Advanced Calculations:
+Static Margin: ${staticMargin.toFixed(3)} (ideal ~0.05-0.15)
+Estimated Endurance: ${endurance.toFixed(2)} hr
+Estimated Range: ${(range/1000).toFixed(2)} km
+
+Airfoil: ${designData.airfoilName || "Custom Imported"}
+
+Recommendations:
+${recommendations.length > 0 ? recommendations.join('\n') : 'None, design looks good!'}
+`.trim();
+
+        // Show or hide Apply Recommendations button
+        if(recommendations.length > 0){
+          applyRecommendationsBtn.style.display = 'inline-block';
+          applyRecommendationsBtn.dataset.recommendations = JSON.stringify(recommendations);
+        } else {
+          applyRecommendationsBtn.style.display = 'none';
+          applyRecommendationsBtn.dataset.recommendations = '';
+        }
+      }
+
+      // Plot lift/drag graph using Chart.js
+      function plotLiftDragCurve(clArray, cdArray){
+        const ctx = document.getElementById('liftDragChart').getContext('2d');
+        if(liftDragChart) liftDragChart.destroy();
+        liftDragChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: clArray,
+            datasets: [{
+              label: 'Drag Coefficient (Cd) vs Lift Coefficient (Cl)',
+              data: cdArray,
+              borderColor: '#004080',
+              backgroundColor: 'rgba(0, 64, 128, 0.1)',
+              fill: true,
+              pointRadius: 4,
+              tension: 0.2,
+            }]
+          },
+          options: {
+            scales: {
+              x: {
+                title: { display: true, text: 'Lift Coefficient (Cl)' },
+                min: Math.min(...clArray),
+                max: Math.max(...clArray),
+              },
+              y: {
+                title: { display: true, text: 'Drag Coefficient (Cd)' },
+                min: 0,
+              }
+            },
+            plugins: {
+              legend: { display: true },
+              tooltip: { mode: 'nearest' }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+          }
+        });
+      }
+
+      // Save design to localStorage
+      function saveDesign(){
+        if(!designData.name) {
+          alert("Design must have a name.");
+          return;
+        }
+        const saveName = saveDesignName.value.trim();
+        if(!saveName) {
+          alert("Please enter a name to save the design.");
+          return;
+        }
+        const savedDesigns = getSavedDesigns();
+        savedDesigns[saveName] = JSON.parse(JSON.stringify(designData));
+        localStorage.setItem('aircraftDesigns', JSON.stringify(savedDesigns));
+        alert(`Design "${saveName}" saved!`);
+        saveDesignName.value = '';
+        saveDesignBtn.disabled = true;
+        loadSavedDesigns();
+      }
+
+      // Load saved designs list
+      function loadSavedDesigns(){
+        const savedDesigns = getSavedDesigns();
+        designList.innerHTML = '';
+        const keys = Object.keys(savedDesigns);
+        if(keys.length === 0){
+          designList.innerHTML = `<li class="saved-designs-empty">No saved designs yet.</li>`;
+          return;
+        }
+        keys.forEach(name => {
+          const li = document.createElement('li');
+          li.textContent = name;
+          li.title = `Load design "${name}"`;
+          li.tabIndex = 0;
+
+          // Load on click or enter key
+          li.addEventListener('click', () => loadDesign(name));
+          li.addEventListener('keydown', e => {
+            if(e.key === 'Enter') loadDesign(name);
+          });
+
+          // Delete button
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '✕';
+          delBtn.title = `Delete design "${name}"`;
+          delBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if(confirm(`Delete design "${name}"?`)){
+              deleteDesign(name);
+            }
+          });
+
+          li.appendChild(delBtn);
+          designList.appendChild(li);
+        });
+      }
+
+      // Get saved designs from localStorage
+      function getSavedDesigns(){
+        const data = localStorage.getItem('aircraftDesigns');
+        return data ? JSON.parse(data) : {};
+      }
+
+      // Delete design
+      function deleteDesign(name){
+        const savedDesigns = getSavedDesigns();
+        if(savedDesigns[name]){
+          delete savedDesigns[name];
+          localStorage.setItem('aircraftDesigns', JSON.stringify(savedDesigns));
+          loadSavedDesigns();
+        }
+      }
+
+      // Load a saved design into form
+      function loadDesign(name){
+        const savedDesigns = getSavedDesigns();
+        const design = savedDesigns[name];
+        if(!design) return alert("Design not found.");
+
+        // Fill form inputs
+        document.getElementById('designName').value = design.name || '';
+        document.getElementById('crew').value = design.crew || 1;
+        document.getElementById('passengers').value = design.passengers || 0;
+        document.getElementById('maxTakeoffWeight').value = design.maxTakeoffWeight || 0;
+
+        document.getElementById('wingSpan').value = design.wingSpan || 0;
+        document.getElementById('wingArea').value = design.wingArea || 0;
+        document.getElementById('aspectRatio').value = design.aspectRatio ? design.aspectRatio.toFixed(2) : '';
+
+        document.getElementById('clMax').value = design.clMax || 0;
+        document.getElementById('cd0').value = design.cd0 || 0;
+        document.getElementById('oswaldEfficiency').value = design.oswaldEfficiency || 0;
+        document.getElementById('cruiseSpeed').value = design.cruiseSpeed || 0;
+
+        document.getElementById('materialYield').value = design.materialYield || 0;
+        document.getElementById('materialDensity').value = design.materialDensity || 0;
+        document.getElementById('safetyFactor').value = design.safetyFactor || 1;
+        document.getElementById('maxLoadFactor').value = design.maxLoadFactor || 0;
+
+        document.getElementById('requiredThrust').value = design.requiredThrust || 0;
+        document.getElementById('specificFuelConsumption').value = design.specificFuelConsumption || 0;
+        document.getElementById('engineEfficiency').value = design.engineEfficiency || 0;
+
+        document.getElementById('emptyWeight').value = design.emptyWeight || 0;
+        document.getElementById('payloadWeight').value = design.payloadWeight || 0;
+        document.getElementById('fuelWeight').value = design.fuelWeight || 0;
+
+        document.getElementById('cgEmpty').value = design.cgEmpty || 0;
+        document.getElementById('cgPayload').value = design.cgPayload || 0;
+        document.getElementById('cgFuel').value = design.cgFuel || 0;
+
+        if(design.airfoilName && recommendedAirfoils[design.airfoilName]){
+          airfoilSelect.value = design.airfoilName;
+          currentAirfoilPolar = recommendedAirfoils[design.airfoilName];
+        } else if(design.airfoilPolar){
+          airfoilSelect.value = '';
+          currentAirfoilPolar = design.airfoilPolar;
+        } else {
+          airfoilSelect.value = '';
+          currentAirfoilPolar = null;
+        }
+
+        showStep(0);
+        calculateSummary();
+        saveDesignBtn.disabled = true;
+        alert(`Design "${name}" loaded.`);
+      }
+
+      // Export all designs to JSON file
+      function exportDesigns(){
+        const savedDesigns = getSavedDesigns();
+        if(Object.keys(savedDesigns).length === 0){
+          alert("No designs to export.");
+          return;
+        }
+        const dataStr = JSON.stringify(savedDesigns, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'aircraft_designs_export.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      // Import designs from JSON file
+      function importDesigns(file){
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const importedData = JSON.parse(evt.target.result);
+            if(typeof importedData !== 'object'){
+              alert("Invalid file format.");
+              return;
+            }
+            const savedDesigns = getSavedDesigns();
+            for(const k in importedData){
+              savedDesigns[k] = importedData[k];
+            }
+            localStorage.setItem('aircraftDesigns', JSON.stringify(savedDesigns));
+            loadSavedDesigns();
+            alert("Designs imported successfully.");
+          } catch(e){
+            alert("Error parsing file: " + e.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // Recommended changes applying (very basic)
+      applyRecommendationsBtn.addEventListener('click', () => {
+        const recs = applyRecommendationsBtn.dataset.recommendations ? JSON.parse(applyRecommendationsBtn.dataset.recommendations) : [];
+        if(recs.length === 0) return;
+
+        let changed = false;
+
+        // Example logic:
+        // If static margin low -> move CG forward by 0.1 m
+        if(recs.find(r => r.includes('Increase static margin'))){
+          const cgEmpty = Number(document.getElementById('cgEmpty').value);
+          document.getElementById('cgEmpty').value = (cgEmpty - 0.1).toFixed(2);
+          changed = true;
+        }
+        // If static margin too high -> move CG back by 0.1 m
+        if(recs.find(r => r.includes('Static margin too high'))){
+          const cgEmpty = Number(document.getElementById('cgEmpty').value);
+          document.getElementById('cgEmpty').value = (cgEmpty + 0.1).toFixed(2);
+          changed = true;
+        }
+        // If low Cl_max -> increase it by 0.1
+        if(recs.find(r => r.includes('Increase max lift coefficient'))){
+          const clMax = Number(document.getElementById('clMax').value);
+          document.getElementById('clMax').value = (clMax + 0.1).toFixed(2);
+          changed = true;
+        }
+        // If low fuel weight -> increase fuel weight by 10%
+        if(recs.find(r => r.includes('increasing fuel capacity'))){
+          const fuelWeight = Number(document.getElementById('fuelWeight').value);
+          document.getElementById('fuelWeight').value = (fuelWeight * 1.1).toFixed(0);
+          changed = true;
+        }
+        // If low thrust -> increase thrust by 10%
+        if(recs.find(r => r.includes('Increase engine thrust'))){
+          const thrust = Number(document.getElementById('requiredThrust').value);
+          document.getElementById('requiredThrust').value = (thrust * 1.1).toFixed(0);
+          changed = true;
+        }
+
+        if(changed){
+          alert("Recommended changes applied. Recalculating...");
+          collectData();
+          calculateSummary();
+        } else {
+          alert("No applicable recommendations to apply.");
+        }
+      });
+
+      // Save design button
+      saveDesignBtn.addEventListener('click', saveDesign);
+      saveDesignName.addEventListener('input', () => {
+        saveDesignBtn.disabled = !saveDesignName.value.trim();
+      });
+
+      // Export/Import designs buttons
+      document.getElementById('exportDesignsBtn').addEventListener('click', exportDesigns);
+      document.getElementById('importDesignsBtn').addEventListener('click', () => {
+        document.getElementById('importDesignsFile').click();
+      });
+      document.getElementById('importDesignsFile').addEventListener('change', e => {
+        if(e.target.files.length > 0){
+          importDesigns(e.target.files[0]);
+          e.target.value = ''; // reset file input
+        }
+      });
+
+      // Initialize
+      loadSavedDesigns();
+      showStep(0);
+      collectData();
+
+    })();
+  </script>
+</body>
+</html>
